@@ -1,12 +1,39 @@
 package com.family.grandhelper.intent
 
-class IntentClassifier {
+import kotlinx.coroutines.runBlocking
+
+class IntentClassifier(
+    private val llmClient: LlmClient? = null
+) {
 
     enum class IntentType {
         ALARM, CALL, NAVIGATION, KAKAOTALK, UNKNOWN
     }
 
+    /**
+     * 1차: 로컬 키워드 매칭 (즉시, 오프라인)
+     * 2차: LLM 폴백 (UNKNOWN일 때만, 네트워크 필요)
+     */
     fun classify(transcript: String): IntentType {
+        val localResult = classifyLocal(transcript)
+        if (localResult != IntentType.UNKNOWN) return localResult
+
+        // LLM 폴백
+        if (llmClient != null) {
+            try {
+                val llmResult = runBlocking { llmClient.classify(transcript) }
+                if (llmResult != null) {
+                    return llmClient.toIntentType(llmResult)
+                }
+            } catch (_: Exception) {
+                // LLM 실패 시 UNKNOWN 반환
+            }
+        }
+
+        return IntentType.UNKNOWN
+    }
+
+    fun classifyLocal(transcript: String): IntentType {
         val normalized = transcript.replace(" ", "").lowercase()
         return when {
             normalized.containsAny(

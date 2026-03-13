@@ -17,6 +17,7 @@ import com.family.grandhelper.action.ActionExecutor
 import com.family.grandhelper.action.ActionResult
 import com.family.grandhelper.intent.IntentClassifier
 import com.family.grandhelper.intent.IntentResult
+import com.family.grandhelper.intent.LlmClient
 import com.family.grandhelper.intent.ParameterExtractor
 import com.family.grandhelper.speech.SpeechManager
 import com.family.grandhelper.speech.TtsManager
@@ -64,7 +65,10 @@ class OverlayService : Service() {
         overlayView = OverlayView(this)
         speechManager = SpeechManager(this)
         ttsManager = TtsManager(this)
-        intentClassifier = IntentClassifier()
+        // LLM 폴백: 로컬 매칭 실패 시에만 호출
+        // TODO: 실제 서버 주소 설정 후 LlmClient 활성화
+        val llmClient: LlmClient? = null // LlmClient(baseUrl = "http://your-server:11434")
+        intentClassifier = IntentClassifier(llmClient)
         parameterExtractor = ParameterExtractor()
         actionExecutor = ActionExecutor(this)
 
@@ -222,18 +226,21 @@ class OverlayService : Service() {
         setState(OverlayState.Executing)
 
         handler.postDelayed({
-            val result = actionExecutor.execute(intentResult)
-
-            when (result) {
-                is ActionResult.Success -> {
-                    setState(OverlayState.Done(result.message, result.subMessage))
-                    ttsManager.speak(result.message)
-                    handler.postDelayed({ dismiss() }, AUTO_DISMISS_DELAY)
-                }
-                is ActionResult.Failure -> {
-                    setState(OverlayState.Error(result.message))
-                    ttsManager.speak(result.message)
-                    handler.postDelayed({ dismiss() }, ERROR_DISMISS_DELAY)
+            // 카카오톡은 비동기, 나머지는 동기
+            actionExecutor.executeAsync(intentResult) { result ->
+                handler.post {
+                    when (result) {
+                        is ActionResult.Success -> {
+                            setState(OverlayState.Done(result.message, result.subMessage))
+                            ttsManager.speak(result.message)
+                            handler.postDelayed({ dismiss() }, AUTO_DISMISS_DELAY)
+                        }
+                        is ActionResult.Failure -> {
+                            setState(OverlayState.Error(result.message))
+                            ttsManager.speak(result.message)
+                            handler.postDelayed({ dismiss() }, ERROR_DISMISS_DELAY)
+                        }
+                    }
                 }
             }
         }, 500)

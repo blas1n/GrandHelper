@@ -1,5 +1,6 @@
 package com.family.grandhelper.intent
 
+import com.family.grandhelper.config.ContactAliasConfig
 import com.family.grandhelper.util.TimeParser
 
 class ParameterExtractor {
@@ -16,7 +17,11 @@ class ParameterExtractor {
 
     fun extractCall(transcript: String): IntentResult.Call {
         val contact = extractContact(transcript)
-        return IntentResult.Call(contactAlias = contact ?: "")
+        val resolvedName = contact?.let { ContactAliasConfig.resolve(it) }
+        return IntentResult.Call(
+            contactAlias = contact ?: "",
+            resolvedName = resolvedName
+        )
     }
 
     fun extractNavigation(transcript: String): IntentResult.Navigation {
@@ -34,17 +39,19 @@ class ParameterExtractor {
     }
 
     private fun extractContact(transcript: String): String? {
-        // Korean postpositions to strip after contact name
+        // 1. ContactAliasConfig에서 알려진 별명 직접 매칭
+        val aliasMatch = ContactAliasConfig.findMatchingAlias(transcript)
+        if (aliasMatch != null) return aliasMatch
+
+        // 2. 조사 기반 패턴 매칭
         val postpositions = listOf(
             "이한테", "한테서", "에게서", "한테다", "에다가",
             "한테", "에게", "보고", "더러"
         )
 
-        // Try to find "X한테/에게" pattern
         for (pp in postpositions) {
             val idx = transcript.indexOf(pp)
             if (idx > 0) {
-                // Walk backwards from postposition to find the contact name
                 val before = transcript.substring(0, idx).trim()
                 val words = before.split(" ")
                 return words.lastOrNull()?.trim()
@@ -65,7 +72,6 @@ class ParameterExtractor {
         for (pattern in patterns) {
             pattern.find(transcript)?.let { match ->
                 val dest = match.groupValues[1].trim()
-                // Remove common prefixes like "네비 틀어서", "길 안내"
                 return dest
                     .replace(Regex("^(네비|내비|길안내|길찾기)\\s*"), "")
                     .replace(Regex("^(틀어서|켜서|찍어서)\\s*"), "")
@@ -74,7 +80,7 @@ class ParameterExtractor {
             }
         }
 
-        // Fallback: try to find destination after navigation keywords
+        // Fallback: 네비 키워드 앞의 단어
         val navKeywords = listOf("네비", "내비", "길 안내", "길찾기")
         for (keyword in navKeywords) {
             val idx = transcript.indexOf(keyword)
@@ -90,7 +96,6 @@ class ParameterExtractor {
     }
 
     private fun extractMessage(transcript: String, contact: String?): String {
-        // Pattern: "X한테 Y(라고/다고) 카톡 보내줘"
         val messagePatterns = listOf(
             Regex("(?:한테|에게)\\s+(.+?)(?:라고|다고|이라고)?\\s*(?:카톡|카카오톡|메시지|문자|톡)"),
             Regex("(?:한테|에게)\\s+(.+?)\\s*(?:보내|전해|전달)"),
@@ -102,12 +107,12 @@ class ParameterExtractor {
             }
         }
 
-        // Fallback: everything between contact and action keyword
+        // Fallback: 연락처와 액션 키워드 사이의 텍스트
         if (contact != null) {
             val contactIdx = transcript.indexOf(contact)
             if (contactIdx >= 0) {
                 val after = transcript.substring(contactIdx + contact.length)
-                    .replace(Regex("^(한테|에게)\\s*"), "")
+                    .replace(Regex("^(이?한테|에게)\\s*"), "")
                     .replace(Regex("(라고|다고|이라고)?\\s*(카톡|카카오톡|메시지|톡|보내|전해|전달).*$"), "")
                     .trim()
                 if (after.isNotBlank()) return after
@@ -118,7 +123,6 @@ class ParameterExtractor {
     }
 
     private fun extractAlarmLabel(transcript: String): String? {
-        // Try to extract context like "약 먹기", "회의"
         val labelPatterns = listOf(
             Regex("(.+?)\\s*알람"),
             Regex("알람.*?(?:맞춰|설정).*?\\s(.+)$"),
@@ -127,7 +131,6 @@ class ParameterExtractor {
         for (pattern in labelPatterns) {
             pattern.find(transcript)?.let { match ->
                 val label = match.groupValues[1].trim()
-                // Filter out time-related words
                 if (!label.matches(Regex(".*[0-9시분].*")) && label.length in 2..20) {
                     return label
                 }
