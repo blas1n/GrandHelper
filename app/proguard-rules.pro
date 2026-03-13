@@ -1,0 +1,1 @@
+# GrandHelper ProGuard rules

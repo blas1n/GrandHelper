@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/overlay_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Backdrop (semi-transparent) -->
+    <View
+        android:id="@+id/backdrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/overlay_backdrop"
+        android:visibility="gone" />
+
+    <!-- Bottom sheet panel -->
+    <LinearLayout
+        android:id="@+id/panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:background="@drawable/bg_overlay_panel"
+        android:paddingStart="@dimen/panel_padding_horizontal"
+        android:paddingEnd="@dimen/panel_padding_horizontal"
+        android:paddingTop="@dimen/panel_padding_top"
+        android:paddingBottom="@dimen/panel_padding_bottom"
+        android:visibility="gone">
+
+        <!-- Handle bar -->
+        <View
+            android:layout_width="@dimen/handle_width"
+            android:layout_height="@dimen/handle_height"
+            android:background="@drawable/bg_handle_bar"
+            android:layout_marginBottom="12dp" />
+
+        <!-- State content container -->
+        <FrameLayout
+            android:id="@+id/state_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="160dp">
+
+            <include
+                android:id="@+id/state_listening"
+                layout="@layout/overlay_listening"
+                android:visibility="gone" />
+
+            <include
+                android:id="@+id/state_thinking"
+                layout="@layout/overlay_thinking"
+                android:visibility="gone" />
+
+            <include
+                android:id="@+id/state_confirming"
+                layout="@layout/overlay_confirming"
+                android:visibility="gone" />
+
+            <include
+                android:id="@+id/state_executing"
+                layout="@layout/overlay_executing"
+                android:visibility="gone" />
+
+            <include
+                android:id="@+id/state_done"
+                layout="@layout/overlay_done"
+                android:visibility="gone" />
+
+            <include
+                android:id="@+id/state_error"
+                layout="@layout/overlay_error"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

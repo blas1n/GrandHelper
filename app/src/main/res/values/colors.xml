@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#FFFF6B4A</color>
+    <color name="primary_light">#FFFF8F6B</color>
+    <color name="background_dark">#FF1C1C20</color>
+    <color name="success">#FF4ADE80</color>
+    <color name="text_white">#FFFFFFFF</color>
+    <color name="text_secondary">#80FFFFFF</color>
+    <color name="text_tertiary">#33FFFFFF</color>
+    <color name="overlay_backdrop">#8C000000</color>
+    <color name="button_cancel_bg">#14FFFFFF</color>
+    <color name="button_cancel_border">#1AFFFFFF</color>
+    <color name="border_subtle">#14FFFFFF</color>
+    <color name="handle_bar">#26FFFFFF</color>
+</resources>

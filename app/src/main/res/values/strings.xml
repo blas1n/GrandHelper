@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">할머니 도우미</string>
+
+    <!-- Overlay states -->
+    <string name="listening_title">듣고 있어요</string>
+    <string name="listening_subtitle">말씀해 주세요</string>
+    <string name="thinking_text">알아듣는 중…</string>
+    <string name="executing_text">실행하고 있어요…</string>
+    <string name="error_title">잘 못 알아들었어요</string>
+    <string name="error_subtitle">다시 말씀해 주세요</string>
+
+    <!-- Confirm buttons -->
+    <string name="confirm_yes">네, 해주세요</string>
+    <string name="confirm_no">아니요</string>
+
+    <!-- Action results -->
+    <string name="alarm_done">알람을 맞췄어요</string>
+    <string name="alarm_confirm">알람을 맞출까요?</string>
+    <string name="call_done">전화를 걸고 있어요</string>
+    <string name="call_confirm">전화를 걸까요?</string>
+    <string name="navi_done">길 안내를 시작해요</string>
+    <string name="navi_confirm">길 안내를 시작할까요?</string>
+    <string name="kakao_done">카톡을 보냈어요</string>
+    <string name="kakao_confirm">카톡을 보낼까요?</string>
+
+    <!-- Errors -->
+    <string name="error_alarm_fail">알람을 맞추지 못했어요</string>
+    <string name="error_call_no_contact">전화번호를 찾지 못했어요</string>
+    <string name="error_navi_no_app">지도 앱을 찾지 못했어요</string>
+    <string name="error_unknown_command">무슨 말씀인지 잘 모르겠어요</string>
+
+    <!-- Notification -->
+    <string name="notification_channel_name">음성 도우미</string>
+    <string name="notification_title">할머니 도우미가 실행 중이에요</string>
+    <string name="notification_stop">중지</string>
+
+    <!-- Accessibility -->
+    <string name="accessibility_service_description">카카오톡 메시지를 자동으로 보내기 위해 사용됩니다.</string>
+
+    <!-- MainActivity -->
+    <string name="permission_overlay">화면 위에 표시 권한</string>
+    <string name="permission_microphone">마이크 권한</string>
+    <string name="permission_notification">알림 권한</string>
+    <string name="permission_contacts">연락처 권한</string>
+    <string name="permission_phone">전화 권한</string>
+    <string name="permission_granted">허용됨</string>
+    <string name="permission_denied">허용 필요</string>
+    <string name="start_service">시작하기</string>
+    <string name="guide_text">측면 버튼을 두 번 누르면\n도우미가 나와요</string>
+
+    <!-- TTS messages -->
+    <string name="tts_listening">네, 말씀하세요</string>
+    <string name="tts_cancel">알겠어요</string>
+    <string name="tts_error">잘 못 알아들었어요. 다시 말씀해 주세요.</string>
+</resources>
