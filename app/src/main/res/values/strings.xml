@@ -21,9 +21,6 @@
     <string name="call_confirm">전화를 걸까요?</string>
     <string name="navi_done">길 안내를 시작해요</string>
     <string name="navi_confirm">길 안내를 시작할까요?</string>
-    <string name="kakao_done">카톡을 보냈어요</string>
-    <string name="kakao_confirm">카톡을 보낼까요?</string>
-
     <!-- Errors -->
     <string name="error_alarm_fail">알람을 맞추지 못했어요</string>
     <string name="error_call_no_contact">전화번호를 찾지 못했어요</string>
@@ -36,7 +33,7 @@
     <string name="notification_stop">중지</string>
 
     <!-- Accessibility -->
-    <string name="accessibility_service_description">카카오톡 메시지를 자동으로 보내기 위해 사용됩니다.</string>
+    <string name="accessibility_service_description">음성 도우미 기능을 위해 사용됩니다.</string>
 
     <!-- MainActivity -->
     <string name="permission_overlay">화면 위에 표시 권한</string>

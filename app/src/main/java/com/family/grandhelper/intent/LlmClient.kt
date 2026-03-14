@@ -157,14 +157,13 @@ class LlmClient(
         return """다음 한국어 음성 명령을 분석하세요.
 명령: "$transcript"
 
-가능한 의도: alarm, call, navigation, kakaotalk, unknown
+가능한 의도: alarm, call, navigation, unknown
 - alarm: 알람, 타이머, 깨워달라는 요청
 - call: 전화 걸기 요청
 - navigation: 길 안내, 네비게이션 요청
-- kakaotalk: 카카오톡/메시지 보내기 요청
 
 JSON으로만 응답하세요:
-{"intent": "alarm|call|navigation|kakaotalk|unknown", "params": {"recipient": "대상", "message": "메시지", "destination": "목적지", "hour": "시", "minute": "분"}}
+{"intent": "alarm|call|navigation|unknown", "params": {"recipient": "대상", "destination": "목적지", "hour": "시", "minute": "분"}}
 
 해당하지 않는 params 필드는 빈 문자열로 두세요."""
     }
@@ -200,7 +199,6 @@ JSON으로만 응답하세요:
             "alarm" -> IntentClassifier.IntentType.ALARM
             "call" -> IntentClassifier.IntentType.CALL
             "navigation" -> IntentClassifier.IntentType.NAVIGATION
-            "kakaotalk" -> IntentClassifier.IntentType.KAKAOTALK
             else -> IntentClassifier.IntentType.UNKNOWN
         }
     }

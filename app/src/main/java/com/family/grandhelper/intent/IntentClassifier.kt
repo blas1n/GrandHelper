@@ -7,7 +7,7 @@ class IntentClassifier(
 ) {
 
     enum class IntentType {
-        ALARM, CALL, NAVIGATION, KAKAOTALK, UNKNOWN
+        ALARM, CALL, NAVIGATION, UNKNOWN
     }
 
     /**
@@ -40,11 +40,6 @@ class IntentClassifier(
                 "알람", "알림맞", "깨워", "일어나", "타이머",
                 "시에맞", "시에깨", "시알람", "분뒤에깨", "분후에깨"
             ) -> IntentType.ALARM
-
-            normalized.containsAny(
-                "카톡", "카카오톡", "메시지보내", "문자보내",
-                "톡보내", "메세지"
-            ) -> IntentType.KAKAOTALK
 
             normalized.containsAny(
                 "네비", "길안내", "길찾기", "까지가", "어떻게가",

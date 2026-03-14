@@ -2,7 +2,7 @@
 
 스마트폰 UI 조작이 어려운 어르신을 위한 Android 음성 AI 도우미 앱.
 
-유튜브를 보다가 **측면 버튼 두 번**만 누르면 오버레이가 나타나고, 음성으로 알람 설정, 전화 걸기, 길 안내, 카카오톡 메시지 전송을 할 수 있습니다.
+유튜브를 보다가 **측면 버튼 두 번**만 누르면 오버레이가 나타나고, 음성으로 알람 설정, 전화 걸기, 길 안내를 할 수 있습니다.
 
 ## 타겟 기기
 
@@ -21,7 +21,6 @@
 | 알람 설정 | "내일 아침 6시에 알람 맞춰줘" | ✅ |
 | 전화 걸기 | "큰아들한테 전화 걸어줘" | ✅ |
 | 길 안내 | "서울역까지 네비 틀어줘" | ✅ |
-| 카카오톡 | "엄마한테 내일 간다고 카톡 보내줘" | ✅ |
 | LLM 폴백 | 로컬 매칭 실패 시 LLM API 호출 | ✅ |
 
 ## 기술 스택
@@ -30,8 +29,7 @@
 - Google STT (SpeechRecognizer) + Google TTS
 - WindowManager 오버레이 (TYPE_APPLICATION_OVERLAY)
 - Foreground Service
-- 로컬 키워드 매칭 + LLM 폴백 (Ollama / Claude Haiku)
-- Accessibility Service (카카오톡 자동화)
+- 로컬 키워드 매칭 + LLM 폴백 (OpenAI / Ollama / Claude)
 - 연락처 별명 매핑 (가족 호칭 → 실제 이름)
 
 ## 빌드

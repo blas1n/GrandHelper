@@ -16,7 +16,6 @@ class OverlayView(context: Context) {
 
     val rootView: View = LayoutInflater.from(context).inflate(R.layout.overlay_panel, null)
 
-    private val backdrop: View = rootView.findViewById(R.id.backdrop)
     private val panel: LinearLayout = rootView.findViewById(R.id.panel)
 
     // State views
@@ -46,12 +45,6 @@ class OverlayView(context: Context) {
 
     private var waveAnimators: List<ObjectAnimator> = emptyList()
 
-    var onBackdropClick: (() -> Unit)? = null
-
-    init {
-        backdrop.setOnClickListener { onBackdropClick?.invoke() }
-    }
-
     fun updateState(state: OverlayState) {
         when (state) {
             is OverlayState.Hidden -> hide()
@@ -70,9 +63,6 @@ class OverlayView(context: Context) {
         if (panel.visibility == View.VISIBLE) {
             val slideDown = AnimationUtils.loadAnimation(rootView.context, R.anim.slide_down)
             panel.startAnimation(slideDown)
-            backdrop.animate().alpha(0f).setDuration(250).withEndAction {
-                backdrop.visibility = View.GONE
-            }
             slideDown.setAnimationListener(object : android.view.animation.Animation.AnimationListener {
                 override fun onAnimationStart(a: android.view.animation.Animation?) {}
                 override fun onAnimationRepeat(a: android.view.animation.Animation?) {}
@@ -83,17 +73,12 @@ class OverlayView(context: Context) {
             })
         } else {
             panel.visibility = View.GONE
-            backdrop.visibility = View.GONE
             hideAllStates()
         }
     }
 
     private fun showPanel() {
         if (panel.visibility != View.VISIBLE) {
-            backdrop.alpha = 0f
-            backdrop.visibility = View.VISIBLE
-            backdrop.animate().alpha(1f).setDuration(300)
-
             panel.visibility = View.VISIBLE
             val slideUp = AnimationUtils.loadAnimation(rootView.context, R.anim.slide_up)
             panel.startAnimation(slideUp)
@@ -180,7 +165,6 @@ class OverlayView(context: Context) {
     private fun stopWaveAnimation() {
         waveAnimators.forEach { it.cancel() }
         waveAnimators = emptyList()
-        // Reset bar scales
         for (i in 0 until waveBars.childCount) {
             waveBars.getChildAt(i).scaleY = 1f
         }

@@ -32,6 +32,8 @@ class OverlayService : Service() {
         private const val NOTIFICATION_ID = 1
         private const val AUTO_DISMISS_DELAY = 2200L
         private const val ERROR_DISMISS_DELAY = 3000L
+        var isRunning = false
+            private set
     }
 
     private lateinit var windowManager: WindowManager
@@ -49,9 +51,12 @@ class OverlayService : Service() {
 
     private val layoutParams = WindowManager.LayoutParams(
         WindowManager.LayoutParams.MATCH_PARENT,
-        WindowManager.LayoutParams.MATCH_PARENT,
+        WindowManager.LayoutParams.WRAP_CONTENT,
         WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
         WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+            or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+            or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+            or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
             or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
         PixelFormat.TRANSLUCENT
     ).apply {
@@ -60,6 +65,7 @@ class OverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        isRunning = true
 
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         overlayView = OverlayView(this)
@@ -95,6 +101,7 @@ class OverlayService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
+        isRunning = false
         handler.removeCallbacksAndMessages(null)
         speechManager.destroy()
         ttsManager.shutdown()
@@ -105,9 +112,8 @@ class OverlayService : Service() {
         super.onDestroy()
     }
 
+    @android.annotation.SuppressLint("ClickableViewAccessibility")
     private fun setupOverlayCallbacks() {
-        overlayView.onBackdropClick = { dismiss() }
-
         overlayView.btnConfirm.setOnClickListener {
             currentIntentResult?.let { onConfirm(it) }
         }
@@ -115,6 +121,15 @@ class OverlayService : Service() {
         overlayView.btnCancel.setOnClickListener {
             ttsManager.speak(getString(R.string.tts_cancel))
             dismiss()
+        }
+
+        // 오버레이 바깥 터치 시 dismiss
+        overlayView.rootView.setOnTouchListener { _, event ->
+            if (event.action == android.view.MotionEvent.ACTION_OUTSIDE
+                && currentState !is OverlayState.Hidden) {
+                dismiss()
+            }
+            false
         }
     }
 
@@ -132,25 +147,35 @@ class OverlayService : Service() {
 
         // Update window flags based on state
         when (state) {
-            is OverlayState.Confirming -> setFocusable(true)
-            is OverlayState.Hidden -> setFocusable(false)
-            else -> setFocusable(false)
+            is OverlayState.Confirming -> setTouchable(true)
+            else -> setTouchable(false)
         }
     }
 
-    private fun setFocusable(focusable: Boolean) {
+    private fun setTouchable(touchable: Boolean) {
         if (!isOverlayAdded) return
-        if (focusable) {
-            layoutParams.flags = layoutParams.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv()
+        if (touchable) {
+            layoutParams.flags = layoutParams.flags and
+                (WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE).inv()
         } else {
-            layoutParams.flags = layoutParams.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+            layoutParams.flags = layoutParams.flags or
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
         }
         windowManager.updateViewLayout(overlayView.rootView, layoutParams)
     }
 
+    private var sttRetryCount = 0
+    private val MAX_STT_RETRIES = 2
+
     private fun startListening() {
         setState(OverlayState.Listening)
+        sttRetryCount = 0
+        doStartListening()
+    }
 
+    private fun doStartListening() {
         speechManager.startListening(object : SpeechManager.Listener {
             override fun onPartialResult(text: String) {
                 setState(OverlayState.ListeningWithText(text))
@@ -161,11 +186,25 @@ class OverlayService : Service() {
             }
 
             override fun onError(errorCode: Int) {
-                setState(OverlayState.Error(getString(R.string.error_title)))
-                ttsManager.speak(getString(R.string.tts_error))
-                handler.postDelayed({ dismiss() }, ERROR_DISMISS_DELAY)
+                android.util.Log.w("OverlayService", "STT error: $errorCode, retry=$sttRetryCount")
+                // 일시적 에러는 재시도
+                if (sttRetryCount < MAX_STT_RETRIES && isRetryableError(errorCode)) {
+                    sttRetryCount++
+                    handler.postDelayed({ doStartListening() }, 500)
+                } else {
+                    setState(OverlayState.Error(getString(R.string.error_title)))
+                    ttsManager.speak(getString(R.string.tts_error))
+                    handler.postDelayed({ dismiss() }, ERROR_DISMISS_DELAY)
+                }
             }
         })
+    }
+
+    private fun isRetryableError(errorCode: Int): Boolean {
+        return errorCode == android.speech.SpeechRecognizer.ERROR_NO_MATCH
+            || errorCode == android.speech.SpeechRecognizer.ERROR_SPEECH_TIMEOUT
+            || errorCode == android.speech.SpeechRecognizer.ERROR_RECOGNIZER_BUSY
+            || errorCode == android.speech.SpeechRecognizer.ERROR_CLIENT
     }
 
     private fun processTranscript(transcript: String) {
@@ -182,8 +221,6 @@ class OverlayService : Service() {
                     parameterExtractor.extractCall(transcript)
                 IntentClassifier.IntentType.NAVIGATION ->
                     parameterExtractor.extractNavigation(transcript)
-                IntentClassifier.IntentType.KAKAOTALK ->
-                    parameterExtractor.extractKakaoTalk(transcript)
                 IntentClassifier.IntentType.UNKNOWN ->
                     IntentResult.Unknown(transcript)
             }
@@ -216,9 +253,6 @@ class OverlayService : Service() {
             is IntentResult.Navigation -> {
                 "\uD83D\uDDFA\uFE0F" to "${result.destination}까지\n${getString(R.string.navi_confirm)}"
             }
-            is IntentResult.KakaoTalk -> {
-                "\uD83D\uDCAC" to "${result.contactAlias}에게\n\"${result.message}\" ${getString(R.string.kakao_confirm)}"
-            }
             is IntentResult.Unknown -> "" to ""
         }
     }
@@ -227,21 +261,17 @@ class OverlayService : Service() {
         setState(OverlayState.Executing)
 
         handler.postDelayed({
-            // 카카오톡은 비동기, 나머지는 동기
-            actionExecutor.executeAsync(intentResult) { result ->
-                handler.post {
-                    when (result) {
-                        is ActionResult.Success -> {
-                            setState(OverlayState.Done(result.message, result.subMessage))
-                            ttsManager.speak(result.message)
-                            handler.postDelayed({ dismiss() }, AUTO_DISMISS_DELAY)
-                        }
-                        is ActionResult.Failure -> {
-                            setState(OverlayState.Error(result.message))
-                            ttsManager.speak(result.message)
-                            handler.postDelayed({ dismiss() }, ERROR_DISMISS_DELAY)
-                        }
-                    }
+            val result = actionExecutor.execute(intentResult)
+            when (result) {
+                is ActionResult.Success -> {
+                    setState(OverlayState.Done(result.message, result.subMessage))
+                    ttsManager.speak(result.message)
+                    handler.postDelayed({ dismiss() }, AUTO_DISMISS_DELAY)
+                }
+                is ActionResult.Failure -> {
+                    setState(OverlayState.Error(result.message))
+                    ttsManager.speak(result.message)
+                    handler.postDelayed({ dismiss() }, ERROR_DISMISS_DELAY)
                 }
             }
         }, 500)

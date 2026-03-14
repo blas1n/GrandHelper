@@ -19,10 +19,5 @@ sealed class IntentResult {
         val destination: String
     ) : IntentResult()
 
-    data class KakaoTalk(
-        val contactAlias: String,
-        val message: String
-    ) : IntentResult()
-
     data class Unknown(val transcript: String) : IntentResult()
 }

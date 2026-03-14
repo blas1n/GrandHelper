@@ -94,9 +94,17 @@ object TimeParser {
     }
 
     private fun parseDayOffset(transcript: String): Int {
+        // "N일 뒤/후" 패턴
+        val dayPattern = Regex("(\\d+|[가-힣]+)\\s*일\\s*(뒤|후)")
+        dayPattern.find(transcript)?.let { match ->
+            parseNumber(match.groupValues[1])?.let { return it }
+        }
+
         return when {
             transcript.contains("글피") -> 3
+            transcript.contains("사흘") -> 3
             transcript.contains("모레") -> 2
+            transcript.contains("이틀") -> 2
             transcript.contains("내일") -> 1
             transcript.contains("오늘") -> 0
             else -> 0

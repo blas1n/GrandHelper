@@ -29,15 +29,6 @@ class ParameterExtractor {
         return IntentResult.Navigation(destination = destination ?: "")
     }
 
-    fun extractKakaoTalk(transcript: String): IntentResult.KakaoTalk {
-        val contact = extractContact(transcript)
-        val message = extractMessage(transcript, contact)
-        return IntentResult.KakaoTalk(
-            contactAlias = contact ?: "",
-            message = message
-        )
-    }
-
     private fun extractContact(transcript: String): String? {
         // 1. ContactAliasConfig에서 알려진 별명 직접 매칭
         val aliasMatch = ContactAliasConfig.findMatchingAlias(transcript)
@@ -93,33 +84,6 @@ class ParameterExtractor {
         }
 
         return null
-    }
-
-    private fun extractMessage(transcript: String, contact: String?): String {
-        val messagePatterns = listOf(
-            Regex("(?:한테|에게)\\s+(.+?)(?:라고|다고|이라고)?\\s*(?:카톡|카카오톡|메시지|문자|톡)"),
-            Regex("(?:한테|에게)\\s+(.+?)\\s*(?:보내|전해|전달)"),
-        )
-
-        for (pattern in messagePatterns) {
-            pattern.find(transcript)?.let { match ->
-                return match.groupValues[1].trim()
-            }
-        }
-
-        // Fallback: 연락처와 액션 키워드 사이의 텍스트
-        if (contact != null) {
-            val contactIdx = transcript.indexOf(contact)
-            if (contactIdx >= 0) {
-                val after = transcript.substring(contactIdx + contact.length)
-                    .replace(Regex("^(이?한테|에게)\\s*"), "")
-                    .replace(Regex("(라고|다고|이라고)?\\s*(카톡|카카오톡|메시지|톡|보내|전해|전달).*$"), "")
-                    .trim()
-                if (after.isNotBlank()) return after
-            }
-        }
-
-        return ""
     }
 
     private fun extractAlarmLabel(transcript: String): String? {

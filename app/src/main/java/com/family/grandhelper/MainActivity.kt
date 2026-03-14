@@ -26,6 +26,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 측면 버튼으로 재실행 시: 퍼미션 OK + 서비스 실행 중이면 토글 후 즉시 종료
+        if (checkAllPermissions() && OverlayService.isRunning) {
+            toggleOverlay()
+            return
+        }
+
         setContentView(R.layout.activity_main)
 
         permissionList = findViewById(R.id.permission_list)
@@ -40,6 +47,21 @@ class MainActivity : AppCompatActivity() {
         }
 
         updatePermissionStatus()
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (checkAllPermissions() && OverlayService.isRunning) {
+            toggleOverlay()
+        }
+    }
+
+    private fun toggleOverlay() {
+        val intent = Intent(this, OverlayService::class.java).apply {
+            action = OverlayService.ACTION_TOGGLE
+        }
+        startForegroundService(intent)
+        finish()
     }
 
     override fun onResume() {
