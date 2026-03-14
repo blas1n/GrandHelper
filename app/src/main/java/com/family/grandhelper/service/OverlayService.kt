@@ -66,8 +66,26 @@ class OverlayService : Service() {
         speechManager = SpeechManager(this)
         ttsManager = TtsManager(this)
         // LLM 폴백: 로컬 매칭 실패 시에만 호출
-        // TODO: 실제 서버 주소 설정 후 LlmClient 활성화
-        val llmClient: LlmClient? = null // LlmClient(baseUrl = "http://your-server:11434")
+        // TODO: 실제 API 키 설정 후 주석 해제
+        // val llmClient: LlmClient? = null
+        // GPT 사용 시:
+        val llmClient = LlmClient(
+             apiType = LlmClient.ApiType.OPENAI,
+             apiKey = "sk-...",
+             model = "gpt-5-nano"
+        )
+        // Claude 사용 시:
+        // val llmClient = LlmClient(
+        //     apiType = LlmClient.ApiType.CLAUDE,
+        //     apiKey = "sk-ant-...",
+        //     model = "claude-haiku-4-5-20251001"
+        // )
+        // Ollama 사용 시:
+        // val llmClient = LlmClient(
+        //     baseUrl = "http://your-server:11434",
+        //     apiType = LlmClient.ApiType.OLLAMA,
+        //     model = "llama3.1:8b"
+        // )
         intentClassifier = IntentClassifier(llmClient)
         parameterExtractor = ParameterExtractor()
         actionExecutor = ActionExecutor(this)

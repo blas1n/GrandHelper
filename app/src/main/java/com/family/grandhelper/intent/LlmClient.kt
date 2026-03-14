@@ -14,6 +14,7 @@ import java.net.URL
  * 지원 백엔드:
  * - Ollama (Mac Mini via Tailscale/Cloudflare Tunnel)
  * - Claude API (Haiku)
+ * - OpenAI API (GPT-4o-mini 등)
  */
 class LlmClient(
     private val baseUrl: String = DEFAULT_BASE_URL,
@@ -30,7 +31,7 @@ class LlmClient(
         private const val READ_TIMEOUT = 15000
     }
 
-    enum class ApiType { OLLAMA, CLAUDE }
+    enum class ApiType { OLLAMA, CLAUDE, OPENAI }
 
     data class LlmResult(
         val intent: String,
@@ -42,6 +43,7 @@ class LlmClient(
             when (apiType) {
                 ApiType.OLLAMA -> classifyWithOllama(transcript)
                 ApiType.CLAUDE -> classifyWithClaude(transcript)
+                ApiType.OPENAI -> classifyWithOpenAI(transcript)
             }
         } catch (e: Exception) {
             null
@@ -107,6 +109,47 @@ class LlmClient(
         val response = conn.inputStream.bufferedReader().readText()
         val json = JSONObject(response)
         val content = json.getJSONArray("content").getJSONObject(0).getString("text")
+        return parseResponse(content)
+    }
+
+    private fun classifyWithOpenAI(transcript: String): LlmResult? {
+        val url = URL("https://api.openai.com/v1/chat/completions")
+        val conn = (url.openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = CONNECT_TIMEOUT
+            readTimeout = READ_TIMEOUT
+            setRequestProperty("Content-Type", "application/json")
+            setRequestProperty("Authorization", "Bearer $apiKey")
+            doOutput = true
+        }
+
+        val prompt = buildPrompt(transcript)
+        val body = JSONObject().apply {
+            put("model", model)
+            put("max_tokens", 256)
+            put("response_format", JSONObject().put("type", "json_object"))
+            put("messages", org.json.JSONArray().apply {
+                put(JSONObject().apply {
+                    put("role", "system")
+                    put("content", "You are a Korean voice command classifier. Always respond in JSON only.")
+                })
+                put(JSONObject().apply {
+                    put("role", "user")
+                    put("content", prompt)
+                })
+            })
+        }
+
+        OutputStreamWriter(conn.outputStream).use { it.write(body.toString()) }
+
+        if (conn.responseCode != 200) return null
+
+        val response = conn.inputStream.bufferedReader().readText()
+        val json = JSONObject(response)
+        val content = json.getJSONArray("choices")
+            .getJSONObject(0)
+            .getJSONObject("message")
+            .getString("content")
         return parseResponse(content)
     }
 

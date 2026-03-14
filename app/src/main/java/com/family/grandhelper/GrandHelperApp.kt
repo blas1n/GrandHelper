@@ -3,6 +3,7 @@ package com.family.grandhelper
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import com.family.grandhelper.config.ContactAliasConfig
 
 class GrandHelperApp : Application() {
 
@@ -13,6 +14,7 @@ class GrandHelperApp : Application() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        ContactAliasConfig.load(this)
     }
 
     private fun createNotificationChannel() {
