@@ -26,3 +26,6 @@ out/
 
 # 개인정보 — 실제 연락처 매핑 파일
 app/src/main/assets/contact_aliases.json
+
+# API 키 — LLM 설정 파일
+app/src/main/assets/llm_config.json

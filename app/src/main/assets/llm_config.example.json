@@ -1,0 +1,6 @@
+{
+  "api_type": "openai",
+  "api_key": "sk-your-api-key-here",
+  "model": "gpt-5-nano",
+  "base_url": ""
+}

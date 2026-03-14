@@ -17,7 +17,7 @@ import com.family.grandhelper.action.ActionExecutor
 import com.family.grandhelper.action.ActionResult
 import com.family.grandhelper.intent.IntentClassifier
 import com.family.grandhelper.intent.IntentResult
-import com.family.grandhelper.intent.LlmClient
+import com.family.grandhelper.config.LlmConfig
 import com.family.grandhelper.intent.ParameterExtractor
 import com.family.grandhelper.speech.SpeechManager
 import com.family.grandhelper.speech.TtsManager
@@ -66,26 +66,9 @@ class OverlayService : Service() {
         speechManager = SpeechManager(this)
         ttsManager = TtsManager(this)
         // LLM 폴백: 로컬 매칭 실패 시에만 호출
-        // TODO: 실제 API 키 설정 후 주석 해제
-        // val llmClient: LlmClient? = null
-        // GPT 사용 시:
-        val llmClient = LlmClient(
-             apiType = LlmClient.ApiType.OPENAI,
-             apiKey = "sk-...",
-             model = "gpt-5-nano"
-        )
-        // Claude 사용 시:
-        // val llmClient = LlmClient(
-        //     apiType = LlmClient.ApiType.CLAUDE,
-        //     apiKey = "sk-ant-...",
-        //     model = "claude-haiku-4-5-20251001"
-        // )
-        // Ollama 사용 시:
-        // val llmClient = LlmClient(
-        //     baseUrl = "http://your-server:11434",
-        //     apiType = LlmClient.ApiType.OLLAMA,
-        //     model = "llama3.1:8b"
-        // )
+        // assets/llm_config.json에서 API 설정 로드 (gitignored)
+        LlmConfig.load(this)
+        val llmClient = LlmConfig.createClient()
         intentClassifier = IntentClassifier(llmClient)
         parameterExtractor = ParameterExtractor()
         actionExecutor = ActionExecutor(this)
