@@ -58,6 +58,16 @@
         android:textColor="@color/text_secondary"
         android:textSize="@dimen/text_small" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="@string/listening_hint"
+        android:textColor="@color/text_secondary"
+        android:textSize="@dimen/text_small"
+        android:alpha="0.7"
+        android:gravity="center" />
+
     <!-- Partial speech text -->
     <TextView
         android:id="@+id/partial_text"

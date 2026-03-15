@@ -97,18 +97,24 @@ object TimeParser {
         // "N일 뒤/후" 패턴
         val dayPattern = Regex("(\\d+|[가-힣]+)\\s*일\\s*(뒤|후)")
         dayPattern.find(transcript)?.let { match ->
-            parseNumber(match.groupValues[1])?.let { return it }
+            parseNumber(match.groupValues[1])?.let {
+                android.util.Log.d("TimeParser", "parseDayOffset: matched N일 뒤/후 -> $it")
+                return it
+            }
         }
 
-        return when {
+        val offset = when {
             transcript.contains("글피") -> 3
             transcript.contains("사흘") -> 3
+            transcript.contains("내일모레") || transcript.contains("내일 모레") -> 2
             transcript.contains("모레") -> 2
             transcript.contains("이틀") -> 2
             transcript.contains("내일") -> 1
             transcript.contains("오늘") -> 0
             else -> 0
         }
+        android.util.Log.d("TimeParser", "parseDayOffset: transcript='$transcript' -> offset=$offset")
+        return offset
     }
 
     private fun parseHour(transcript: String): Int? {
@@ -182,13 +188,15 @@ object TimeParser {
 
     private fun formatDisplay(cal: Calendar): String {
         val now = Calendar.getInstance()
-        val dayDiff = ((cal.timeInMillis - now.timeInMillis) / (24 * 60 * 60 * 1000)).toInt()
+        val todayDay = now.get(Calendar.DAY_OF_YEAR) + now.get(Calendar.YEAR) * 365
+        val targetDay = cal.get(Calendar.DAY_OF_YEAR) + cal.get(Calendar.YEAR) * 365
+        val dayDiff = targetDay - todayDay
 
-        val dayStr = when {
-            isSameDay(cal, now) -> "오늘"
-            dayDiff <= 1 -> "내일"
-            dayDiff == 2 -> "모레"
-            else -> "글피"
+        val dayStr = when (dayDiff) {
+            0 -> "오늘"
+            1 -> "내일"
+            2 -> "모레"
+            else -> if (dayDiff > 2) "${dayDiff}일 뒤" else "오늘"
         }
 
         val hour = cal.get(Calendar.HOUR_OF_DAY)

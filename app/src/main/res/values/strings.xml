@@ -5,6 +5,7 @@
     <!-- Overlay states -->
     <string name="listening_title">듣고 있어요</string>
     <string name="listening_subtitle">말씀해 주세요</string>
+    <string name="listening_hint">"알람 맞춰줘 · 전화 걸어줘 · 길 안내해줘"</string>
     <string name="thinking_text">알아듣는 중…</string>
     <string name="executing_text">실행하고 있어요…</string>
     <string name="error_title">잘 못 알아들었어요</string>

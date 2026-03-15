@@ -17,6 +17,8 @@ class ParameterExtractor {
 
     fun extractCall(transcript: String): IntentResult.Call {
         val contact = extractContact(transcript)
+        // 별명 매핑이 있으면 resolvedName으로 설정 (별명 → 실제 이름)
+        // 없으면 contact 자체가 이름이므로 그대로 연락처에서 검색됨
         val resolvedName = contact?.let { ContactAliasConfig.resolve(it) }
         return IntentResult.Call(
             contactAlias = contact ?: "",
@@ -30,11 +32,16 @@ class ParameterExtractor {
     }
 
     private fun extractContact(transcript: String): String? {
+        android.util.Log.d("ParameterExtractor", "extractContact: transcript='$transcript'")
+
         // 1. ContactAliasConfig에서 알려진 별명 직접 매칭
         val aliasMatch = ContactAliasConfig.findMatchingAlias(transcript)
-        if (aliasMatch != null) return aliasMatch
+        if (aliasMatch != null) {
+            android.util.Log.d("ParameterExtractor", "extractContact: alias match='$aliasMatch'")
+            return aliasMatch
+        }
 
-        // 2. 조사 기반 패턴 매칭
+        // 2. 조사 기반 패턴 매칭 (조사 앞의 이름 추출)
         val postpositions = listOf(
             "이한테", "한테서", "에게서", "한테다", "에다가",
             "한테", "에게", "보고", "더러"
@@ -44,11 +51,27 @@ class ParameterExtractor {
             val idx = transcript.indexOf(pp)
             if (idx > 0) {
                 val before = transcript.substring(0, idx).trim()
-                val words = before.split(" ")
-                return words.lastOrNull()?.trim()
+                val name = before.split(" ").lastOrNull()?.trim()
+                android.util.Log.d("ParameterExtractor", "extractContact: postposition '$pp' -> name='$name'")
+                if (!name.isNullOrBlank()) return name
             }
         }
 
+        // 3. "OOO 전화" / "OOO에 전화" 패턴 — 전화 키워드 앞에서 이름 추출
+        val callKeywords = listOf("전화", "통화", "연락", "콜")
+        for (keyword in callKeywords) {
+            val idx = transcript.indexOf(keyword)
+            if (idx > 0) {
+                val before = transcript.substring(0, idx).trim()
+                    .replace(Regex("[에게]$"), "")
+                    .trim()
+                val name = before.split(" ").lastOrNull()?.trim()
+                android.util.Log.d("ParameterExtractor", "extractContact: keyword '$keyword' -> name='$name'")
+                if (!name.isNullOrBlank()) return name
+            }
+        }
+
+        android.util.Log.d("ParameterExtractor", "extractContact: no match found")
         return null
     }
 
@@ -63,27 +86,32 @@ class ParameterExtractor {
         for (pattern in patterns) {
             pattern.find(transcript)?.let { match ->
                 val dest = match.groupValues[1].trim()
-                return dest
-                    .replace(Regex("^(네비|내비|길안내|길찾기)\\s*"), "")
-                    .replace(Regex("^(틀어서|켜서|찍어서)\\s*"), "")
-                    .trim()
-                    .ifBlank { null }
+                return cleanDestination(dest)
             }
         }
 
-        // Fallback: 네비 키워드 앞의 단어
+        // Fallback: 네비 키워드 앞의 전체 텍스트
         val navKeywords = listOf("네비", "내비", "길 안내", "길찾기")
         for (keyword in navKeywords) {
             val idx = transcript.indexOf(keyword)
             if (idx >= 0) {
                 val before = transcript.substring(0, idx).trim()
                 if (before.isNotBlank()) {
-                    return before.split(" ").lastOrNull()?.replace(Regex("[까지으로]$"), "")
+                    return cleanDestination(before)
                 }
             }
         }
 
         return null
+    }
+
+    private fun cleanDestination(raw: String): String? {
+        return raw
+            .replace(Regex("^(네비|내비|길안내|길찾기)\\s*"), "")
+            .replace(Regex("^(틀어서|켜서|찍어서|틀어|켜|찍어)\\s*"), "")
+            .replace(Regex("[까지으로]$"), "")
+            .trim()
+            .ifBlank { null }
     }
 
     private fun extractAlarmLabel(transcript: String): String? {

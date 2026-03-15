@@ -12,6 +12,12 @@ import com.family.grandhelper.intent.IntentResult
 class CallAction(private val context: Context) {
 
     fun execute(call: IntentResult.Call): ActionResult {
+        android.util.Log.d("CallAction", "execute: alias='${call.contactAlias}', resolved='${call.resolvedName}'")
+
+        if (call.contactAlias.isBlank()) {
+            return ActionResult.Failure(context.getString(R.string.error_call_no_contact))
+        }
+
         // 1. 별명으로 실제 이름 찾기
         val realName = call.resolvedName
             ?: ContactAliasConfig.resolve(call.contactAlias)
@@ -20,6 +26,8 @@ class CallAction(private val context: Context) {
         val phoneNumber = call.phoneNumber
             ?: realName?.let { lookupPhoneNumber(it) }
             ?: lookupPhoneNumber(call.contactAlias)
+
+        android.util.Log.d("CallAction", "execute: realName='$realName', phoneNumber='$phoneNumber'")
 
         if (phoneNumber == null) {
             return ActionResult.Failure(

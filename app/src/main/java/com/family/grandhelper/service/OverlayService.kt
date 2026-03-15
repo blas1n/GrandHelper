@@ -208,6 +208,7 @@ class OverlayService : Service() {
     }
 
     private fun processTranscript(transcript: String) {
+        android.util.Log.d("OverlayService", "STT transcript: '$transcript'")
         setState(OverlayState.Thinking)
 
         // Small delay for visual feedback of "thinking" state
